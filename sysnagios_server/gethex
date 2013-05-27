@@ -1,0 +1,38 @@
+#!/bin/sh 
+#NRPE_PORT=`echo $1|awk -F: '{print $2}'`
+NRPE_PORT=$2
+EXTRA=$3
+HOST=`echo $1|awk -F: '{print $1}'`
+shift
+
+if [ `hostname` = antnagios ]; then
+	NRPE_PORT=${NRPE_PORT:=1987}
+else
+	NRPE_PORT=${NRPE_PORT:=2004}
+fi
+
+#echo "host $HOST port $NRPE_PORT"
+count=0
+
+line=`/usr/local/nagios/libexec/check_nrpe -H $HOST -p $NRPE_PORT -c get_config $EXTRA`
+arne=$?
+while [ $arne -gt 0 -a $count -lt 10 ]
+do
+	line=`/usr/local/nagios/libexec/check_nrpe -H $HOST -p $NRPE_PORT -c get_config $EXTRA`
+	arne=$?
+	count=`expr 1 + $count`
+done
+
+echo $line | grep -v NRPE | grep -v 'Ñ&1'
+while [ $arne -eq 0 ]
+do
+	line=`/usr/local/nagios/libexec/check_nrpe -H $HOST -p $NRPE_PORT -c get_config $EXTRA`
+	arne=$?
+	#if [ $arne -eq 0 ]; then
+		#echo $line | grep -v NRPE | grep -v 'Ñ&1' 
+		echo $line | egrep -v 'NRPE|Ñ&1|No output available' 
+	#fi
+done
+
+
+#Ñ&1

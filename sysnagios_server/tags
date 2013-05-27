@@ -1,0 +1,40 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+apan_check	test_get_configs.sh	/^apan_check() {$/;"	f
+clean	functions.sh	/^clean() {$/;"	f
+create_tar	functions.sh	/^create_tar() {$/;"	f
+debug	disk_gb.cgi	/^debug() {$/;"	f
+debug	disk_gb_collector.sh	/^debug() {$/;"	f
+debug	disk_gb_graph.cgi	/^debug() {$/;"	f
+debug	disk_gb_mkpic.cgi	/^debug() {$/;"	f
+debug	disk_usage_collector.sh	/^debug() {$/;"	f
+debug	disk_usage_graph.cgi	/^debug() {$/;"	f
+debug	disk_usage_mkpic.cgi	/^debug() {$/;"	f
+debug	functions.sh	/^debug() {$/;"	f
+debug	getconfigs.cgi	/^sub debug {$/;"	s
+debug	perf_collector.sh	/^debug() {$/;"	f
+debug	perf_graph.cgi	/^debug() {$/;"	f
+debug	perf_mkpic.cgi	/^debug() {$/;"	f
+debug	sysnagios_graph.cgi	/^debug() {$/;"	f
+debug	sysnagios_mkpic.cgi	/^debug() {$/;"	f
+debugutskrift	disk_gb_collector.sh	/^debugutskrift() {$/;"	f
+debugutskrift	disk_usage_collector.sh	/^debugutskrift() {$/;"	f
+debugutskrift	perf_collector.sh	/^debugutskrift() {$/;"	f
+delete_apan_filesystem	functions.sh	/^delete_apan_filesystem() {$/;"	f
+delete_apan_service	functions.sh	/^delete_apan_service() {$/;"	f
+get_ip	functions.sh	/^get_ip() {$/;"	f
+iscommand	functions.sh	/^iscommand() {$/;"	f
+isgraph	functions.sh	/^isgraph() {$/;"	f
+ismonkey	functions.sh	/^ismonkey() {$/;"	f
+mkfilename	functions.sh	/^mkfilename() {$/;"	f
+readconfig	getconfigs.cgi	/^sub readconfig {$/;"	s
+readconfig	showproxies.cgi	/^sub readconfig {$/;"	s
+write_apan_service	functions.sh	/^write_apan_service() {$/;"	f
+write_host	functions.sh	/^write_host() {$/;"	f
+write_hostextinfo	functions.sh	/^write_hostextinfo () {$/;"	f
+write_services	functions.sh	/^write_services() {$/;"	f
+write_servicextinfo	functions.sh	/^write_servicextinfo () {$/;"	f

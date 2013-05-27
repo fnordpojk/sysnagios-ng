@@ -1,0 +1,94 @@
+# Definition file for sysnagios
+get_epoch() {
+epoch=`date -u +'((%Y-1970)*365+(%Y-1969)/4 + %j - 1 )*24*60*60 + %H*3600 + %M * 60 + %S' | bc`
+}
+
+get_awhileago () {
+	epoch=`date +'%j * 86400 + %H * 3600 + %M * 60 + %S' | bc`
+
+	epoch=`echo "$epoch-900" | bc`
+	dayofyear=`echo "$epoch / 86400"|bc`
+	hour=`echo "($epoch-$dayofyear*86400)/3600" | bc`
+	minute=`echo "($epoch-$dayofyear*86400-$hour*3600)/60" | bc`
+	awhileago=`printf "%02d:%02d:00" $hour $minute`
+}
+
+
+define_LINUX() {
+	GREP=/bin/grep
+	AWK=/usr/bin/gawk
+	if [ -x /usr/bin/xxd ]; then
+		XXD=/usr/bin/xxd
+	else 
+		XXD=$SYSNAGIOS_HOME/confscript/xxd_linux
+	fi
+	PS=/bin/ps
+	DF="/bin/df -P"
+	EGREP="/bin/grep -E"
+	get_awhileago
+	GETSAR="sar -s $awhileago|tail -1| $AWK '{printf \"%.0f %.0f %.0f %.0f\n\",\$3,\$5,\$6,\$8}'"
+	IPTABLES_CONFIG=/etc/sysconfig/iptables
+}
+
+define_Solaris() {
+	GREP=/usr/xpg4/bin/grep
+	AWK=/usr/bin/nawk
+	XXD=$SYSNAGIOS_HOME/confscript/xxd
+	PS=/usr/bin/ps
+	EGREP=/usr/bin/egrep
+	DF=/usr/sbin/df
+	# Solaris SAR verkar inte klara av dygnsskiften riktigt. Kompensera.
+	if [ "`date +'%H * 3600 + %M * 60 + %S' | bc`" -lt 900 ]; then
+		awhileago=00:00:01
+	else
+		get_awhileago
+	fi
+	GETSAR="sar -s $awhileago|tail -1 | $AWK '{printf \"%d %d %d %d\\\n\",\$2,\$3,\$4,\$5}'"
+}
+
+define_Solaris_x86() {
+	define_Solaris
+	XXD=$SYSNAGIOS_HOME/confscript/xxd-sol-10-x86
+}
+
+haveri() {
+	echo "$1"
+	exit 0
+}
+
+testa_prog() {
+	for prog in $progs;do
+		ls "$prog" > /dev/null || haveri "Program $prog does not exist"
+	done
+}
+
+find_iptables() {
+	if [ -x /sbin/iptables ]; then IPTABLES="/sbin/iptables" ; echo $IPTABLES
+	elif [ -x /usr/sbin/iptables ]; then IPTABLES="/usr/sbin/iptables"
+	fi
+}
+
+OS=`uname`
+case $OS in
+'Linux')
+	define_LINUX
+	;;
+'SunOS')
+	if uname -a | grep 86 > /dev/null ; then
+		define_Solaris_x86
+	else
+		define_Solaris
+	fi
+	;;
+'*')
+	echo "$OS is not defined in sysnagios"
+	exit 0
+	;;
+esac
+
+SYSNAGIOS_CFG=$SYSNAGIOS_HOME/nrpe.cfg
+
+#find_iptables
+
+progs="$GREP $AWK $XXD"
+testa_prog

@@ -1,0 +1,218 @@
+define serviceextinfo {
+name 						bmn-serviceextinfo
+register				0
+#icon_image      graph.png
+notes_url       /nagios/cgi-bin/nagiosgraph/show.cgi?host=$HOSTNAME$&service=$SERVICEDESC$&geom=800x200
+icon_image_alt  View graphs
+}
+
+define hostextinfo {
+name 						bmn-hostextinfo
+register				0
+notes_url       /nagios/cgi-bin/nagiosgraph/show.cgi?host=$HOSTNAME$&geom=800x200
+action_url		/nagios/cgi-bin/getconfigs.cgi?host=$HOSTNAME$&proxy=bmn-nagios
+icon_image_alt  View graphs
+#statusmap_image graph.png
+#vrml_image graph.png
+notes           This host is proxied via bmn-proxy
+}
+define service {
+	name				bmn-service
+	is_volatile			0
+	notification_period		24x7
+	max_check_attempts		2
+	check_period			24x7
+	retry_check_interval		1
+	active_checks_enabled		0
+	passive_checks_enabled		1
+	parallelize_check		1
+	obsess_over_service		1
+	check_freshness			0
+	event_handler_enabled		1
+	flap_detection_enabled		1
+	process_perf_data		1
+	retain_status_information	1
+	retain_nonstatus_information	1
+	notification_interval		120
+	normal_check_interval		10
+	contact_groups			prodlarm,systemdrift
+	check_command                   check_nrpe!$SERVICEDESC$!$_SERVICEPORT$!$_SERVICEARG$
+	notification_options		w,u,c,r,f
+	notifications_enabled		0
+	register			0
+}
+define host {
+	name				bmn-host
+	check_interval                  10
+	active_checks_enabled           0
+	passive_checks_enabled          1
+	max_check_attempts              3
+	check_period                    24x7
+	obsess_over_host                1
+	check_freshness                 0
+	event_handler_enabled           1
+	flap_detection_enabled          1
+	process_perf_data               1
+	retain_status_information       1
+	retain_nonstatus_information    1
+	contact_groups			prodlarm,systemdrift
+	notification_interval           120
+	notification_period		24x7
+	notification_options            d,u,r,f
+	notifications_enabled           0
+	check_command                   check-host!$_HOSTPORT$!
+	register                        0
+}
+define serviceextinfo {
+name 						bmn-serviceextinfo
+register				0
+#notes_url       /nagios/cgi-bin/nagiosgraph/show.cgi?host=$HOSTNAME$&service=$SERVICEDESC$
+#icon_image      graph.png
+notes_url       /nagios/cgi-bin/nagiosgraph/show.cgi?host=$HOSTNAME$&service=$SERVICEDESC$&geom=800x200
+icon_image_alt  View graphs
+}
+
+define hostextinfo {
+name 						bmn-hostextinfo
+register				0
+notes_url       /nagios/cgi-bin/nagiosgraph/show.cgi?host=$HOSTNAME$&geom=800x200
+action_url		/nagios/cgi-bin/getconfigs.cgi?host=$HOSTNAME$&geom=800x200&port=$_HOSTPORT$
+icon_image_alt  View graphs
+#statusmap_image graph.png
+#vrml_image graph.png
+notes           This host runs via bmn-nagios
+}
+define service {
+	name				bmn-service
+	is_volatile			0
+	notification_period		24x7
+	max_check_attempts		2
+	check_period			24x7
+	retry_check_interval		1
+	active_checks_enabled		1
+	passive_checks_enabled		1
+	parallelize_check		1
+	obsess_over_service		1
+	check_freshness			0
+	event_handler_enabled		1
+	flap_detection_enabled		1
+	process_perf_data		1
+	retain_status_information	1
+	retain_nonstatus_information	1
+	notification_interval		120
+	normal_check_interval		10
+	contact_groups			prodlarm,systemdrift
+	notification_options		w,u,c,r,f
+	notifications_enabled		0
+	register			0
+}
+define host {
+	name				bmn-host
+	check_interval                  10
+	active_checks_enabled           1
+	passive_checks_enabled          1
+	max_check_attempts              3
+	check_period                    24x7
+	obsess_over_host                1
+	check_freshness                 0
+	event_handler_enabled           1
+	flap_detection_enabled          1
+	process_perf_data               1
+	retain_status_information       1
+	retain_nonstatus_information    1
+	contact_groups			prodlarm,systemdrift
+	notification_interval           120
+	notification_period		24x7
+	notification_options            d,u,r,f
+	notifications_enabled           0
+	check_command         		check-host!2004!
+	register                        0
+}
+define serviceextinfo {
+name 						nagiosgraph
+register				0
+notes_url       /nagios/cgi-bin/nagiosgraph/show.cgi?host=$HOSTNAME$&service=$SERVICEDESC$&ip=$HOSTADDRESS$&geom=800x200
+#icon_image      graph.png
+icon_image_alt  View graphs
+}
+
+define hostextinfo {
+name 						nagiosgraph-host
+register				0
+notes_url       /nagios/cgi-bin/nagiosgraph/show.cgi?host=$HOSTNAME$&ip=$HOSTADDRESS$&geom=800x200
+action_url		/nagios/cgi-bin/getconfigs.cgi?host=$HOSTNAME$&ip=$HOSTADDRESS$&geom=800x200
+#icon_image      graph.png
+icon_image_alt  View graphs
+#statusmap_image graph.png
+#vrml_image graph.png
+notes           This host has nagiosgraph enabled
+}
+define serviceextinfo  {
+      name             standard_extinfo
+		notes_url        /nagios/cgi-bin/nagiosgraph/show.cgi?host=$HOSTNAME$&service=$SERVICEDESC$&geom=800x200
+		register         0
+}      
+define host {
+	name				standardhost
+#check_interval                  10
+	check_interval                  0
+	active_checks_enabled           1
+	passive_checks_enabled          1
+	max_check_attempts              3
+	check_period                    24x7
+	obsess_over_host                1
+	check_freshness                 0
+	event_handler_enabled           1
+	flap_detection_enabled          1
+	process_perf_data               1
+	retain_status_information       1
+	retain_nonstatus_information    1
+	contact_groups			prodlarm,systemdrift
+	notification_interval           120
+	notification_period		24x7
+	notification_options            d,u,r,f
+	notifications_enabled           0
+	check_command         		check-host!2004!
+	register                        0
+#check_command         check-host-alive!1987!-n
+}
+define hostextinfo {
+        name	standard_host_extinfo
+        action_url                      /nagios/cgi-bin/getconfigs.cgi?host=$HOSTNAME$
+        register          0
+        icon_image_alt  View graphs
+}
+define service {
+	name				standardservice
+	is_volatile			0
+	notification_period		24x7
+	max_check_attempts		3
+	check_period			24x7
+	retry_check_interval		1
+	active_checks_enabled		1
+	passive_checks_enabled		1
+	parallelize_check		1
+	obsess_over_service		1
+	check_freshness			0
+	event_handler_enabled		1
+	flap_detection_enabled		1
+	process_perf_data		1
+	retain_status_information	1
+	retain_nonstatus_information	1
+	notification_interval		10
+	normal_check_interval		10
+	contact_groups			prodlarm,systemdrift
+	notification_options		w,u,c,r,f
+	notifications_enabled		0
+	register			0
+}
+define hostextinfo {
+name 						sysnagios_getconfigs
+register				0
+notes_url       /nagios/cgi-bin/nagiosgraph/getconfigs.cgi?host=$HOSTNAME$
+action_url		/nagios/cgi-bin/show.cgi?host=$HOSTNAME$&geom=800x200
+#icon_image      graph.png
+icon_image_alt  Update config
+#statusmap_image graph.png
+#vrml_image 	graph.png
+}

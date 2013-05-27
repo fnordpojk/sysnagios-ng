@@ -1,0 +1,4 @@
+/usr/local/nagios/apan-sql/apanadm/apandel.sh prag check_disk_prag_prag
+/usr/local/nagios/apan-sql/apanadm/apandel.sh prag check_disk_prag_oradb
+/usr/local/nagios/apan-sql/apanadm/apandel.sh rio check_disk_rio
+/usr/local/nagios/apan-sql/apanadm/apandel.sh riofc check_disk_riofc

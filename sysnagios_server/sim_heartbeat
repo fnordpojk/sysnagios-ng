@@ -1,0 +1,10 @@
+#!/bin/sh
+
+ENV_SCRIPT=/etc/mcell/setup_env.sh
+MSEND=/opt/bmc/Impact/server/bin/msend
+
+. $ENV_SCRIPT
+
+$MSEND -q -n BEM_SV -a NAGIOS_HEARTBEAT
+
+echo "SIM heartbeat OK"
