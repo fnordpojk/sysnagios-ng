@@ -38,8 +38,8 @@ fi
 CONFIG_FILE=$1
 TMP_CONFIG_FILE=$CONFIG_FILE
 
-TEMPDIR=/tmp/tempdir.$$
-if [ ! -d $TEMPDIR ]; then mkdir $TEMPDIR; fi
+#TEMPDIR=/tmp/tempdir.$$
+#if [ ! -d $TEMPDIR ]; then mkdir $TEMPDIR; fi
 
 #SERVICES_OUTDIR är kanske lite missvisande nu, eftersom det fortfarande är en 
 # tempkatalog. Detta är en rest från tidigare. 
@@ -74,7 +74,7 @@ sed -n '/^#::check_START/,/^#::check_END/{;s/^# +/#/;/^$/d;/^command/p;/^#::/p;}
 		debug "$c $a"
 		case $c in
 			'hvar')
-				echo $a
+				#echo $a
 				varname=""
 				val=""
 				varname=`echo "$a"| cut -d" " -f1`
@@ -83,7 +83,7 @@ sed -n '/^#::check_START/,/^#::check_END/{;s/^# +/#/;/^$/d;/^command/p;/^#::/p;}
 				eval `printf 'hvar_%s="%s"' "$varname" "$val"`
 				;;
 			'svar')
-				echo $a
+				#echo $a
 				varname=""
 				val=""
 				varname=`echo "$a"| cut -d" " -f1`
@@ -113,6 +113,7 @@ sed -n '/^#::check_START/,/^#::check_END/{;s/^# +/#/;/^$/d;/^command/p;/^#::/p;}
 				# Get IP for the host
 				# Get hostname from nrpe-file 
 				HOST=$a
+				get_services $a
 				# Get ip only if it is'nt set in the nrpe.cfg file
 				if [ $hardip -eq 0 ] ; then get_ip $HOST;  fi
 				if [ -z $ip ]; then 
@@ -120,7 +121,12 @@ sed -n '/^#::check_START/,/^#::check_END/{;s/^# +/#/;/^$/d;/^command/p;/^#::/p;}
 					exit 1
 				fi
 				write_host "$HOST" "$ALIAS" "$CONTACT" "$SLA" "$ip"
-				write_hostextinfo "$HOST" "$NOTES" "$ip"
+				;;
+			'check_command')
+				check_command=$a
+				;;
+			'check_command_args')
+				check_command_args=$a
 				;;
 			'hostgroup')
 				HOSTGROUP=$a
@@ -131,10 +137,18 @@ sed -n '/^#::check_START/,/^#::check_END/{;s/^# +/#/;/^$/d;/^command/p;/^#::/p;}
 			'hostgroups')
 				HOSTGROUP=$a
 				;;
+			'action_url') 
+				action_url=$a
+				;;
 			'notes') 
 				NOTES=$a
 				;;
 			'host_end') 
+				delete_global_services
+				if [ -z $rollback_rollback ]; then
+					save
+				fi
+	
 				HOST="" 
 				;;
 			'alias')
@@ -155,12 +169,6 @@ sed -n '/^#::check_START/,/^#::check_END/{;s/^# +/#/;/^$/d;/^command/p;/^#::/p;}
 			'servicegroups')
 				SERVICEGROUPS=$a
 				;;
-			'template_hostextinfo')
-				HOST_EXTINFO_TEMPLATE=$a
-				;;
-			'hostextinfo_template')
-				HOST_EXTINFO_TEMPLATE=$a
-				;;
 			'host_template')
 				HOST_TEMPLATE=$a
 				;;
@@ -173,12 +181,6 @@ sed -n '/^#::check_START/,/^#::check_END/{;s/^# +/#/;/^$/d;/^command/p;/^#::/p;}
 			'template_service')
 				SERVICE_TEMPLATE=$a
 				;;
-			'serviceextinfo_template')
-				SERVICE_EXTINFO_TEMPLATE=$a
-				;;
-			'template_serviceextinfo')
-				SERVICE_EXTINFO_TEMPLATE=$a
-				;;
 			'check_period')
 				CHECK_PERIOD=$a
 				;;
@@ -189,8 +191,7 @@ sed -n '/^#::check_START/,/^#::check_END/{;s/^# +/#/;/^$/d;/^command/p;/^#::/p;}
 					ZZL="'!-n"
 				fi
 				write_services "$HOST" "$a" "$CONTACT" "$SLA" "$CHECK_NRPE!$a!$NRPE_PORT$ZZL"
-				# Write service_extinfo
-				write_servicextinfo "$HOST" "$a" "$NOTES"
+				pop_service "$a"
 				;;
 			'sla')
 				SLA=$a
@@ -211,6 +212,7 @@ sed -n '/^#::check_START/,/^#::check_END/{;s/^# +/#/;/^$/d;/^command/p;/^#::/p;}
    echo "No $nrpe.cfg"
 fi
 
+exit
 
 ########## Now test the new files.
 
@@ -233,6 +235,7 @@ for file in `ls *.cfg` ; do
 		fi
 	fi
 done
+
 
 # Install the new config files
 ls $TEMPDIR

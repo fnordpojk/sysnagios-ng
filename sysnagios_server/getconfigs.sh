@@ -4,7 +4,7 @@
 # 2007-03-12 Fredrik W Added possibility to skip SSL. If you dont want SSL,
 #                      specify <host>:<port>:nossl
 
-DEBUG=0
+DEBUG=1
 
 if [ $DEBUG -lt 2 ]; then
 	. /etc/sysnagios.conf
@@ -102,16 +102,5 @@ for host in $hosts; do
 		echo "$hostname - no new config"
 	fi
 done
-
-echo local? $LOCAL_RUN
-if [ -z "$LOCAL_RUN" ]; then
-if [ $updated -eq 1 ]; then
-	cd $CONFIG_DIR
-	chown -R $NAGIOS_USR_GRP *
-	eval $NAGIOS_RELOAD_CMD 
-else
-	echo "No updates"
-fi
-fi
 
 if [ -f $TEMP_TARFILE ] ; then rm $TEMP_TARFILE; fi
