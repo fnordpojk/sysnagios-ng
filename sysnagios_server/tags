@@ -28,6 +28,7 @@ debugutskrift	perf_collector.sh	/^debugutskrift() {$/;"	f
 delete_global_services	functions.sh	/^delete_global_services(){$/;"	f
 get_ip	functions.sh	/^get_ip() {$/;"	f
 get_services	functions.sh	/^get_services(){$/;"	f
+get_sysnagios_services	functions.sh	/^get_sysnagios_services(){$/;"	f
 iscommand	functions.sh	/^iscommand() {$/;"	f
 make_array	functions.sh	/^make_array(){$/;"	f
 mkfilename	functions.sh	/^mkfilename() {$/;"	f
@@ -36,8 +37,7 @@ readconfig	getconfigs.cgi	/^sub readconfig {$/;"	s
 readconfig	showproxies.cgi	/^sub readconfig {$/;"	s
 rollback	functions.sh	/^rollback(){$/;"	f
 save	functions.sh	/^save(){$/;"	f
+urldecode	functions.sh	/^urldecode(){$/;"	f
 urlencode	functions.sh	/^urlencode(){$/;"	f
 write_host	functions.sh	/^write_host() {$/;"	f
-write_hostextinfo	functions.sh	/^write_hostextinfo () {$/;"	f
 write_services	functions.sh	/^write_services() {$/;"	f
-write_servicextinfo	functions.sh	/^write_servicextinfo () {$/;"	f

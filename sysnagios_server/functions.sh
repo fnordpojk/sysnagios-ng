@@ -5,7 +5,7 @@ urlencode(){
 }
 
 urldecode(){
-	echo $1 | perl -MURI::Escape -lane 'print uri_unescape($F[0]);' | perl -MURI::Escape -lane 'print uri_unescape($F[0]);'
+	(echo "";echo $1) | perl -MURI::Escape -lane 'print uri_unescape($F[0]);' | perl -MURI::Escape -lane 'print uri_unescape($F[0]);'
 }
 
 rollback(){
@@ -15,7 +15,6 @@ rollback(){
 	echo " "
 	exit 1
 }
-
 
 save(){
 	if [ -z "$rollback_rollback" ]; then 
@@ -32,9 +31,10 @@ check_host_exist(){
 }
 
 delete_global_services(){
-	for dgs_service in $global_services; do
+	echo $global_sysnagios_services
+	for dgs_service in $global_sysnagios_services; do
 		dgs_tmp_service=`urldecode $dgs_service`
-		echo DELETE \"$dgs_tmp_service\"
+		echo DELETE \"$dgs_tmp_service\" 
 		dgs_curl_res=`curl -X DELETE -s -k -u $SYSNAGIOS_USER:$SYSNAGIOS_PASSWD https://$API_SERVER/api/config/service/$HOST%253B$dgs_service`
 		if echo $dgs_curl_res|grep error: > /dev/null; then
 			echo "Delete $dgs_service failed"
@@ -47,20 +47,46 @@ delete_global_services(){
 get_services(){
 	gs_hostname=$1
 
-
-	gs_global_services=`curl -s -k -u $SYSNAGIOS_USER:$SYSNAGIOS_PASSWD https://$API_SERVER/api/config/host/$gs_hostname?format=xml | grep service_description | sed 's/<[^>]\+>//g' | sed 's/^ *//' |  sort | xargs echo`
+	gs_global_services=`(echo " "; curl -s -k -u $SYSNAGIOS_USER:$SYSNAGIOS_PASSWD https://$API_SERVER/api/config/host/$gs_hostname?format=xml) | grep service_description | sed 's/<[^>]\+>//g' | (echo "";sed 's/^ *//') |  perl -MURI::Escape -lane 'foreach $c (<STDIN>){ chop $c; print uri_escape($c)."\n";}'| sort | xargs echo`
 
 	global_services=""
 	for gs_c in $gs_global_services; do
+		gs_c=`urldecode $gs_c`
 		gs_c=`urlencode $gs_c`
 		global_services="$global_services $gs_c"
 	done
+
+	
+	get_sysnagios_services $gs_hostname
+
+	#echo services:"          " $global_services
+	#echo sysnagios_services: `$global_sysnagios_services
+}
+
+
+get_sysnagios_services(){
+	gss_hostname=$1
+
+	gss_global_services=`curl -s -k -u $SYSNAGIOS_USER:$SYSNAGIOS_PASSWD https://$API_SERVER/api/config/host/$gss_hostname | sed 's/,/\n/g' | sed -n '/services":/,$p' | sed 's/"services":\[{//g' | awk -F: '/"service_description"/ { service_description=$2} /"_SYSNAGIOS":"1"/ { print service_description }' | (echo "";sed 's/"//g') | perl -MURI::Escape -lane 'foreach $c (<STDIN>){ chop $c; print uri_escape($c)."\n";}' | xargs echo` 
+
+	set -x
+	global_sysnagios_services=""
+	for gss_c in $gss_global_services; do
+		# Remove backslashes from api output.
+		gss_c=`echo $gss_c| sed 's/%5C%2F/%2F/g'`
+		#make sure the output is double encode, not triple or single.
+		gss_c=`urldecode $gss_c`
+		gss_c=`urlencode $gss_c`
+		global_sysnagios_services="$global_sysnagios_services $gss_c"
+	done
+	set +x
 }
 
 pop_service (){
-	#ps_service=`echo $1|  perl -MURI::Escape -lane 'print uri_escape($F[0]);' `
 	ps_service=`urlencode $1`
+	#ps_service=`urlencode $ps_service`
 	global_services=`echo " " $global_services " "| sed "s/ $ps_service / /g"`
+	global_sysnagios_services=`echo " " $global_sysnagios_services " "| sed "s/ $ps_service / /g"`
 } 
 
 check_service_exist(){
@@ -76,13 +102,17 @@ check_service_exist(){
 # get commandlist for current host
 make_array(){
 	# make the comma list into a space-list
-	ma_list=`echo "$1" | sed 's/ //g' | sed 's/,/ /g'`
-	ma_outstr='['
-	for ma_loop in $ma_list; do 
+	if [ -n "$1" ]; then
+		ma_list=`echo "$1" | sed 's/ //g' | sed 's/,/ /g'`
+		ma_outstr='['
+		for ma_loop in $ma_list; do 
 		ma_outstr=$ma_outstr'"'$ma_loop'",'
-	done
-	ma_outstr=`echo $ma_outstr | sed 's/.$//'`']'
-	echo $ma_outstr
+		done
+		ma_outstr=`echo $ma_outstr | sed 's/.$//'`']'
+		echo $ma_outstr
+	else
+		echo "[]";
+	fi
 }
 
 iscommand() {
@@ -140,8 +170,9 @@ write_services() {
 	ws_notification_period=$4
 	ws_check_command=$5
 
-	#if [ $ws_service = "disk_/opt/apps" ];then set -x; fi
 	ws_outfile=/tmp/${ws_hostname}_service.$$.cfg
+
+	if [ -f "$ws_outfile" ]; then rm $ws_outfile; fi
 
 	if check_service_exist $ws_hostname $ws_service; then 
 		echo "Service $ws_service is already configured - patching"
@@ -158,6 +189,7 @@ write_services() {
 
 
 	ws_outstr='{"template":"'$SERVICE_TEMPLATE\"
+	ws_outstr=$ws_outstr',"_SYSNAGIOS":"1"'
 	ws_outstr=$ws_outstr',"host_name":"'$ws_hostname\"
 	ws_outstr=$ws_outstr',"service_description":"'$ws_service\"
 
@@ -170,24 +202,16 @@ write_services() {
 	ws_outstr=$ws_outstr',"_PORT":"'$NRPE_PORT\"
 	ws_outstr=$ws_outstr',"_ARG":"'$NRPE_ARGS' "'
 	ws_outstr=$ws_outstr',"register":"1"'
-
 	ws_outstr=$ws_outstr',"notes":"'$NOTES\"
 	ws_outstr=$ws_outstr',"action_url":"'$action_url\"
-
-	if [ -n "$SERVICEGROUPS" ] ; then
-		ws_outstr=$ws_outstr',"servicegroups":"'`make_array $SERVICEGROUPS`\"
-	fi
-
+	ws_outstr=$ws_outstr',"servicegroups":'`make_array "$SERVICEGROUPS"`
 	ws_outstr=$ws_outstr',"check_command":"'$check_command\"
 	ws_outstr=$ws_outstr',"check_command_args":"'$check_command_args\"
-
-	if [ -n "$max_check_attempts" ] ; then
-		ws_outstr=$ws_outstr',"max_check_attempts":"'$max_check_attempts\"
-	fi
-
-	if [ -n "$CHECK_PERIOD" ] ; then
-		ws_outstr=$ws_outstr',"check_period":"'$CHECK_PERIOD\"
-	fi
+	ws_outstr=$ws_outstr',"check_interval":"'$check_interval\"
+	ws_outstr=$ws_outstr',"retry_interval":"'$retry_interval\"
+	ws_outstr=$ws_outstr',"max_check_attempts":"'$max_check_attempts\"
+	ws_outstr=$ws_outstr',"check_period":"'$CHECK_PERIOD\"
+	ws_outstr=$ws_outstr',"contacts":'`make_array $CONTACTS`
 
 	if [ -n "$SVARS" ]; then 
 		for var in $SVARS; do
@@ -202,16 +226,15 @@ write_services() {
 
 	ws_curl_output=`curl $ws_patcharg -s -k -H 'content-type: application/json' -u $SYSNAGIOS_USER:$SYSNAGIOS_PASSWD https://$API_SERVER/api/config/service$ws_patchobj -d \@$ws_outfile`  
 
-	#if [ $ws_service != "disk_/home" ];then 
-	rm $ws_outfile
-	#fi
 
 	if echo $ws_curl_output | grep '{"error":' > /dev/null ; then
 		echo "ERROR in service"
+		echo "curl $ws_patcharg -s -k -H 'content-type: application/json' -u SYSNAGIOS_USER:SYSNAGIOS_PASSWD https://$API_SERVER/api/config/service$ws_patchobj -d \@$ws_outfile"
+		cat $ws_outfile
 		echo $ws_curl_output
 		rollback
 	fi
-	#set +x
+	rm $ws_outfile
 }
 
 write_host() {
@@ -232,7 +255,6 @@ write_host() {
 		echo "Host $wh_hostname is not configured - creating"
 		wh_patching=0
 	fi
-
 
 	write_host_outfile=/tmp/$wh_hostname.host.$$.json
 
@@ -260,23 +282,16 @@ write_host() {
 	w_h_outstr=$w_h_outstr',"alias":"'$write_host_alias'"'
 	w_h_outstr=$w_h_outstr',"display_name":"'$write_host_alias'"'
 	w_h_outstr=$w_h_outstr',"register":"1"' 
-
+	w_h_outstr=$w_h_outstr',"check_command":""' 
 	w_h_outstr=$w_h_outstr',"notes":"'$NOTES'"'
 	w_h_outstr=$w_h_outstr',"action_url":"'$action_url'"'
-
-	if [ -n "$4" ]; then
-		 w_h_outstr=$w_h_outstr',"notification_period":"'$4'"' 
-	fi
-
+	w_h_outstr=$w_h_outstr',"notification_period":"'$4'"' 
 	w_h_outstr=$w_h_outstr',"address":"'$5'"'
 	w_h_outstr=$w_h_outstr',"_PORT":"'$NRPE_PORT' "'
 	w_h_outstr=$w_h_outstr',"_ARG":"'$NRPE_ARGS' "'
 	w_h_outstr=$w_h_outstr',"_SSL":"'$SSL' "'
 
-	if [ -n "$CHECK_PERIOD" ]; then
-		w_h_outstr=$w_h_outstr',"check_period":"'$CHECK_PERIOD'"'
-	fi
-
+	w_h_outstr=$w_h_outstr',"check_period":"'$CHECK_PERIOD'"'
 	if [ -n "$HOSTGROUP" ] ; then
 		w_h_hostgroups=$HOSTGROUP
 
@@ -284,18 +299,13 @@ write_host() {
 			w_h_hostgroups=$HOSTGROUP,$HOSTGROUP_APPEND
 		fi
 
-		w_h_outstr=$w_h_outstr',"hostgroups":'`make_array $w_h_hostgroups`
 	fi
+	w_h_outstr=$w_h_outstr',"hostgroups":'`make_array $w_h_hostgroups`
 
 	#Contactgroups
-	if [ -n "$3" ]; then 
-		w_h_outstr=$w_h_outstr',"contact_groups":'`make_array $3`
-	fi 
-
-
-	if [ -n "$max_check_attempts" ] ; then
-		w_h_outstr=$w_h_outstr',"max_check_attempts":"'$max_check_attempts'"'
-	fi
+	w_h_outstr=$w_h_outstr',"contact_groups":'`make_array $3`
+	w_h_outstr=$w_h_outstr',"contacts":'`make_array $CONTACTS`
+	w_h_outstr=$w_h_outstr',"max_check_attempts":"'$max_check_attempts'"'
 
 	if [ -n "$HVARS" ]; then 
 		for var in $HVARS; do
@@ -312,7 +322,7 @@ write_host() {
 	wc_patchobj=""
 	if [ $wh_patching = 1 ]; then
 		wh_patcharg="-X PATCH"
-		wh_patchobj=/$wh_hostname
+		wh_patchobj="/$wh_hostname"
 	else
 		echo "CREATING HOST $wh_hostname"
 	fi
@@ -323,7 +333,7 @@ write_host() {
 	rm $write_host_outfile
 
 	if echo  $wh_curl_output | grep '{"error":' > /dev/null ; then
-		echo $wh_curl_output
+		echo $wh_curl_output 
 		rollback
 		exit
 	fi
@@ -341,3 +351,10 @@ mkfilename() {
 	echo "$TEMPDIR/${1}_services.cfg"
 }
 
+#. /etc/sysnagios.conf
+#get_services gurka
+#echo $global_sysnagios_services
+#get_services tomat
+#echo $global_sysnagios_services
+#
+#exit

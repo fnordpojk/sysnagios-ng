@@ -4,7 +4,7 @@
 # 2007-03-12 Fredrik W Added possibility to skip SSL. If you dont want SSL,
 #                      specify <host>:<port>:nossl
 
-DEBUG=1
+DEBUG=0
 
 if [ $DEBUG -lt 2 ]; then
 	. /etc/sysnagios.conf

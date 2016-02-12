@@ -104,7 +104,7 @@ sed -n '/^#::check_START/,/^#::check_END/{;s/^# +/#/;/^$/d;/^command/p;/^#::/p;}
 				SSL_URL="&ssl=ssl"
 				SSL="ssl"
 				;;
-			'host') 
+			'hostname') 
 				# If you want servicechecks to be associated with another host
 				# use with caution
 				HOST=$a
@@ -144,10 +144,12 @@ sed -n '/^#::check_START/,/^#::check_END/{;s/^# +/#/;/^$/d;/^command/p;/^#::/p;}
 				NOTES=$a
 				;;
 			'host_end') 
+				
 				delete_global_services
 				if [ -z $rollback_rollback ]; then
 					save
 				fi
+
 	
 				HOST="" 
 				;;
@@ -162,9 +164,19 @@ sed -n '/^#::check_START/,/^#::check_END/{;s/^# +/#/;/^$/d;/^command/p;/^#::/p;}
 				CONTACT=$a;
 				debug "### Contact: $CONTACT"
 				;;
-			'contact')
-				CONTACT=$a;
+			'contacts')
+				CONTACTS=$a;
 				debug "### Contact: $CONTACT"
+				;;
+			'contact')
+				CONTACTS=$a;
+				debug "### Contact: $CONTACT"
+				;;
+			'check_interval')
+				check_interval=$a;
+				;;
+			'retry_interval')
+				retry_interval=$a;
 				;;
 			'servicegroups')
 				SERVICEGROUPS=$a
@@ -192,6 +204,10 @@ sed -n '/^#::check_START/,/^#::check_END/{;s/^# +/#/;/^$/d;/^command/p;/^#::/p;}
 				fi
 				write_services "$HOST" "$a" "$CONTACT" "$SLA" "$CHECK_NRPE!$a!$NRPE_PORT$ZZL"
 				pop_service "$a"
+				;;
+			'notification_period')
+				SLA=$a
+				debug "notificatiopn_period/SLA=$a"
 				;;
 			'sla')
 				SLA=$a
